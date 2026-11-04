@@ -14,13 +14,13 @@ export class Dashboard {
 
   protected readonly rows = signal<DashboardItem[]>(
     [{
-      symbol: 'ALFA',
-      tradePrice: undefined,
-      askPrice: undefined,
-      bidPrice: undefined,
-      tradeQuantity: undefined,
-      bidQuantity: undefined,
-      askQuantity: undefined
+      "instrument": "ALFA",
+      "priceCents": 10200,
+      "tradeQuantity": 30,
+      "bidCents": 10196,
+      "askCents": 10200,
+      "bidQuantity": 600,
+      "askQuantity": 400
     }]
   );
 }

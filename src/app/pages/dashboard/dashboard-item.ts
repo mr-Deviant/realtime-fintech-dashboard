@@ -1,9 +1,9 @@
 export interface DashboardItem {
-  symbol?: string;
-  tradePrice?: number;
-  askPrice?: number;
-  bidPrice?: number;
+  instrument?: string;
+  priceCents?: number;
   tradeQuantity?: number;
+  bidCents?: number;
+  askCents?: number;
   bidQuantity?: number;
   askQuantity?: number;
 }

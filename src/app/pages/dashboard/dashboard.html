@@ -8,7 +8,7 @@
     >
       <ng-container matColumnDef="symbol">
         <th mat-header-cell *matHeaderCellDef>Instrument</th>
-        <td mat-cell *matCellDef="let row" scope="row">{{ row.symbol }}</td>
+        <td mat-cell *matCellDef="let row" scope="row">{{ row.instrument }}</td>
       </ng-container>
 
       <ng-container matColumnDef="lastPrice">
@@ -16,8 +16,8 @@
           Last traded price
         </th>
         <td mat-cell *matCellDef="let row">
-          @if (row.tradePrice !== undefined) {
-            {{ row.tradePrice / 100 | currency }}
+          @if (row.priceCents !== undefined) {
+            {{ row.priceCents / 100 | currency }}
           } @else {
             N/A
           }
@@ -29,8 +29,8 @@
           Bid–ask spread
         </th>
         <td mat-cell *matCellDef="let row">
-          @if (row.askPrice !== undefined && row.bidPrice !== undefined) {
-            {{ (row.askPrice - row.bidPrice) / 100 | currency }}
+          @if (row.askCents !== undefined && row.bidCents !== undefined) {
+            {{ (row.askCents - row.bidCents) / 100 | currency }}
           } @else {
             N/A
           }
@@ -55,8 +55,8 @@
           Volume-weighted average price (VWAP)
         </th>
         <td mat-cell *matCellDef="let row">
-          @if (row.tradePrice !== undefined && row.tradeQuantity !== undefined) {
-            sum({{ row.tradePrice / 100 }} × {{ row.tradeQuantity }}) / sum({{ row.tradeQuantity }}) currency
+          @if (row.priceCents !== undefined && row.tradeQuantity !== undefined) {
+            sum({{ row.priceCents / 100 }} × {{ row.tradeQuantity }}) / sum({{ row.tradeQuantity }}) currency
           } @else {
             N/A
           }
