@@ -1,7 +1,16 @@
 @use "normalize.css";
 
 :root {
+    // General
     --font-family: Roboto, "Helvetica Neue", sans-serif;
+
+    // Top menu
+    --top-menu-bg-color:  #efedf0;
+    --top-menu-border-bottom-color: #c4c6d0;
+    --top-menu-logo-color: #1a1b1f;
+    --top-menu-link-color: #44474e;
+    --top-menu-link-hover-color: #1a1b1f;
+    --top-menu-focus-color: #005cbb;
 }
 
 html,
@@ -10,7 +19,6 @@ body {
 }
 
 body {
-    font-family: Roboto, "Helvetica Neue", sans-serif;
     margin: 0;
 }
 

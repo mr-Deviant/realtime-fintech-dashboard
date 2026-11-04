@@ -1,1 +1,28 @@
-<router-outlet />
+<header class="top-menu">
+  <a class="top-menu__logo" routerLink="/dashboard">Realtime Fintech Dashboard</a>
+  <nav class="top-menu__nav">
+    <ul class="top-menu__list">
+      <li class="top-menu__item">
+        <a
+          class="top-menu__link"
+          routerLink="/dashboard"
+          routerLinkActive="top-menu__link--active"
+        >
+          Dashboard
+        </a>
+      </li>
+      <li class="top-menu__item">
+        <a
+          class="top-menu__link"
+          routerLink="/settings"
+          routerLinkActive="top-menu__link--active"
+        >
+          Settings
+        </a>
+      </li>
+    </ul>
+  </nav>
+</header>
+<main class="content">
+  <router-outlet />
+</main>
