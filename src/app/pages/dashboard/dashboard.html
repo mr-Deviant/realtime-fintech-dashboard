@@ -1,1 +1,83 @@
-<p>dashboard works!</p>
+<section class="dashboard">
+  <h1 class="dashboard__title">Dashboard</h1>
+  <div class="dashboard__table-wrapper">
+    <table
+      class="dashboard__table"
+      mat-table
+      [dataSource]="rows()"
+    >
+      <ng-container matColumnDef="symbol">
+        <th mat-header-cell *matHeaderCellDef>Instrument</th>
+        <td mat-cell *matCellDef="let row" scope="row">{{ row.symbol }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="lastPrice">
+        <th mat-header-cell *matHeaderCellDef>
+          Last traded price
+        </th>
+        <td mat-cell *matCellDef="let row">
+          @if (row.tradePrice !== undefined) {
+            {{ row.tradePrice / 100 | currency }}
+          } @else {
+            N/A
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="spread">
+        <th mat-header-cell *matHeaderCellDef>
+          Bid–ask spread
+        </th>
+        <td mat-cell *matCellDef="let row">
+          @if (row.askPrice !== undefined && row.bidPrice !== undefined) {
+            {{ (row.askPrice - row.bidPrice) / 100 | currency }}
+          } @else {
+            N/A
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="volume">
+        <th mat-header-cell *matHeaderCellDef>
+          Trading volume
+        </th>
+        <td mat-cell *matCellDef="let row">
+          @if (row.tradeQuantity !== undefined) {
+            sum({{ row.tradeQuantity | number }})
+          } @else {
+            N/A
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="vwap">
+        <th mat-header-cell *matHeaderCellDef>
+          Volume-weighted average price (VWAP)
+        </th>
+        <td mat-cell *matCellDef="let row">
+          @if (row.tradePrice !== undefined && row.tradeQuantity !== undefined) {
+            sum({{ row.tradePrice / 100 }} × {{ row.tradeQuantity }}) / sum({{ row.tradeQuantity }}) currency
+          } @else {
+            N/A
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="imbalance">
+        <th mat-header-cell *matHeaderCellDef>
+          Order-book imbalance
+        </th>
+        <td mat-cell *matCellDef="let row">
+          @if (row.bidQuantity !== undefined && row.askQuantity !== undefined) {
+            ({{ row.bidQuantity }} − {{ row.askQuantity }}) / ({{ row.bidQuantity }} + {{ row.askQuantity }})
+          } @else {
+            N/A
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+  </div>
+</section>

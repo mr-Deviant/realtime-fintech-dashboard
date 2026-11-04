@@ -1,0 +1,17 @@
+:host {
+  .dashboard {
+    &__title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 0 0 1rem;
+    }
+
+    &__table-wrapper {
+      overflow-x: auto;
+    }
+
+    &__table {
+      width: 100%;
+    }
+  }
+}
