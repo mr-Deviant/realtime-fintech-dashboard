@@ -1,0 +1,31 @@
+@use "normalize.css";
+
+:root {
+    --font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    margin: 0;
+}
+
+// TODO: remove unused components
+body,
+.mat-mdc-form-field,
+.mat-mdc-select,
+.mat-mdc-option,
+.mat-mdc-optgroup-label,
+.mat-mdc-raised-button,
+.mat-button-toggle,
+.mat-mdc-unelevated-button,
+.mat-calendar,
+.mat-mdc-checkbox,
+.mat-mdc-table,
+.mat-mdc-list-item {
+    font-family: var(--font-family);
+}
