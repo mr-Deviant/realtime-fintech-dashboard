@@ -10,6 +10,8 @@ import { DashboardItem } from "./dashboard-item";
   templateUrl: "./dashboard.html",
 })
 export class Dashboard {
+  protected readonly na = 'N/A';
+
   protected readonly columns = ["symbol", "lastPrice", "spread", "volume", "vwap", "imbalance"];
 
   protected readonly rows = signal<DashboardItem[]>(
