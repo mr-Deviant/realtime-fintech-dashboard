@@ -1,0 +1,29 @@
+.settings {
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0 0 1rem;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 24rem;
+  }
+
+  &__submit {
+    align-self: flex-start;
+  }
+}
+
+// Hide the native increase/decrease spinners on number inputs.
+.settings input[type="number"] {
+  appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+}

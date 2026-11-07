@@ -1,4 +1,4 @@
-export interface DashboardItem {
+export interface DashboardModel {
   instrument?: string;
   priceCents?: number;
   tradeQuantity?: number;
