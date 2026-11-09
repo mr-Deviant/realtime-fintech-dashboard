@@ -2,14 +2,14 @@ import { SettingsModel } from '../pages/settings/settings-model';
 
 export type ProducerStatus = 'running' | 'paused';
 
-/** Messages sent from the app to the producer worker. */
+// Messages sent from the app to the producer worker
 export type ProducerCommand =
   | { readonly type: 'start'; readonly runId: number; readonly settings: SettingsModel }
   | { readonly type: 'pause'; readonly runId: number }
   | { readonly type: 'resume'; readonly runId: number }
   | { readonly type: 'stop' };
 
-/** Messages sent from the producer worker to the app. */
+// Messages sent from the producer worker to the app
 export type ProducerEvent =
   | { readonly type: 'ready' }
   | { readonly type: 'error'; readonly message: string }

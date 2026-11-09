@@ -13,7 +13,7 @@ interface Run {
   readonly runId: number;
   readonly updatesPerBatch: number;
   readonly batchIntervalMs: number;
-  timer: unknown;
+  timer: unknown; // Pending timer handle, or undefined when no batch is scheduled
 }
 
 /**
@@ -37,12 +37,14 @@ export class ProducerEngine {
         this.start(command.runId, command.settings);
         break;
       case 'pause':
+        // Only if the command’s runId matches the current run and a timer is pending
         if (this.isCurrent(command.runId) && this.run?.timer !== undefined) {
           this.cancelTimer();
           this.post({ type: 'status', runId: command.runId, status: 'paused' });
         }
         break;
       case 'resume':
+        // Only if the run id matches and no timer is pending (it's paused)
         if (this.isCurrent(command.runId) && this.run?.timer === undefined) {
           this.schedule();
           this.post({ type: 'status', runId: command.runId, status: 'running' });
@@ -56,9 +58,10 @@ export class ProducerEngine {
   }
 
   private start(runId: number, settings: SettingsModel): void {
-    this.cancelTimer();
+    this.cancelTimer(); // Tear down any previous run
     this.run = undefined;
     try {
+      // Re-initialize the Wasm generator with a fresh seed and the new instrument count
       this.generator.init(this.nextSeed(), settings.instrumentCount);
     } catch (error) {
       this.post({ type: 'error', message: errorMessage(error) });
@@ -76,18 +79,20 @@ export class ProducerEngine {
 
   private tick(): void {
     const run = this.run;
-    if (!run) return;
-    run.timer = undefined;
+    if (!run) return; // Do nothing if it was stopped
+    run.timer = undefined; // Mark timer as fired
     let records: Int32Array;
     try {
+      // Call Wasm to produce the batch as an Int32Array (7 integers per update)
       records = this.generator.generate(run.updatesPerBatch);
     } catch (error) {
       this.run = undefined;
       this.post({ type: 'error', message: errorMessage(error) });
       return;
     }
+    // Send the batch tagged with runId and pass records.buffer in the transfer list
     this.post({ type: 'batch', runId: run.runId, records }, [records.buffer]);
-    this.schedule();
+    this.schedule(); // Schedule next tick
   }
 
   private schedule(): void {
