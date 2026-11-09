@@ -6,7 +6,7 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 https://github.com/mr-Deviant/realtime-fintech-dashboard
 
 ## Live demo
-https://mr-deviant.github.io/realtime-fintech-dashboard/.
+https://mr-deviant.github.io/realtime-fintech-dashboard/
 
 ## Development server
 
