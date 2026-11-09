@@ -2,6 +2,12 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.5.
 
+## Repository
+https://github.com/mr-Deviant/realtime-fintech-dashboard
+
+## Live demo
+https://mr-deviant.github.io/realtime-fintech-dashboard/.
+
 ## Development server
 
 To start a local development server, run:

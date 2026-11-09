@@ -1,0 +1,50 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a newer push replace a deployment that is still running
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # `npm run build` compiles the AssemblyScript module to public/wasm first (prebuild script).
+      # The app is served from /<repository-name>/, so the base href must match.
+      - run: npm run build -- --base-href /${{ github.event.repository.name }}/
+
+      # GitHub Pages has no SPA fallback: serving index.html as 404.html lets deep links such as /settings work.
+      - run: cp dist/realtime-fintech-dashboard/browser/index.html dist/realtime-fintech-dashboard/browser/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/realtime-fintech-dashboard/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
