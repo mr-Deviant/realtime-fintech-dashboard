@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FakeProducerWorker, fakeWorkerClass } from "../../producer/fake-producer-worker";
-import { SettingsService } from "./settings-service";
+import { DEFAULT_SETTINGS, SettingsService } from "./settings-service";
 import { Settings } from "./settings";
 
 describe("Settings", () => {
   let fixture: ComponentFixture<Settings>;
   let settingsService: SettingsService;
+  let worker: FakeProducerWorker;
 
   const inputs = () =>
     Array.from(fixture.nativeElement.querySelectorAll("input")) as HTMLInputElement[];
@@ -18,7 +19,8 @@ describe("Settings", () => {
   }
 
   beforeEach(async () => {
-    vi.stubGlobal("Worker", fakeWorkerClass(new FakeProducerWorker()));
+    worker = new FakeProducerWorker();
+    vi.stubGlobal("Worker", fakeWorkerClass(worker));
     await TestBed.configureTestingModule({ imports: [Settings] }).compileComponents();
     settingsService = TestBed.inject(SettingsService);
     fixture = TestBed.createComponent(Settings);
@@ -37,17 +39,28 @@ describe("Settings", () => {
     expect(settingsService.settings().instrumentCount).toBe(5);
   });
 
-  it("applies valid values", async () => {
+  it("does not start a new run while editing", async () => {
+    await type(inputs()[0], "10");
+    expect(worker.commands).toHaveLength(1); // only the initial run
+  });
+
+  it("applies valid values and starts a new run with them", async () => {
     await type(inputs()[0], "10");
     await type(inputs()[1], "250");
     await type(inputs()[2], "100");
     applyButton().click();
     await fixture.whenStable();
-    expect(settingsService.settings()).toEqual({
-      instrumentCount: 10,
-      updatesPerBatch: 250,
-      batchIntervalMs: 100,
-    });
+
+    const applied = { instrumentCount: 10, updatesPerBatch: 250, batchIntervalMs: 100 };
+    expect(settingsService.settings()).toEqual(applied);
+    expect(worker.lastCommand).toEqual({ type: "start", runId: 2, settings: applied });
+  });
+
+  it("starts a new run even when the values are unchanged", async () => {
+    applyButton().click();
+    await fixture.whenStable();
+
+    expect(worker.lastCommand).toEqual({ type: "start", runId: 2, settings: DEFAULT_SETTINGS });
   });
 
   it.each([
@@ -59,11 +72,17 @@ describe("Settings", () => {
     [2, "2001"],
     [0, "2.5"],
     [0, ""],
+    [1, "99.5"],
+    [2, "500.5"],
   ])("rejects input %i = '%s'", async (index, value) => {
     await type(inputs()[index], value);
-    expect(applyButton().disabled).toBe(true);
     applyButton().click();
     await fixture.whenStable();
-    expect(settingsService.settings().instrumentCount).toBe(5);
+
+    // Nothing is applied and no new run starts...
+    expect(settingsService.settings()).toEqual(DEFAULT_SETTINGS);
+    expect(worker.commands).toHaveLength(1);
+    // ...and the user is told why.
+    expect(fixture.nativeElement.querySelector("mat-error")).not.toBeNull();
   });
 });

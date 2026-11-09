@@ -8,6 +8,8 @@
       <mat-error>
         @if (instrumentCount.hasError('required')) {
           Instrument count is required
+        } @else if (instrumentCount.hasError('integer')) {
+          Must be a whole number
         } @else if (instrumentCount.hasError('min')) {
           Must be at least 1
         } @else if (instrumentCount.hasError('max')) {
@@ -23,6 +25,8 @@
       <mat-error>
         @if (updatesPerBatch.hasError('required')) {
           Updates per batch is required
+        } @else if (updatesPerBatch.hasError('integer')) {
+          Must be a whole number
         } @else if (updatesPerBatch.hasError('min')) {
           Must be at least 1
         } @else if (updatesPerBatch.hasError('max')) {
@@ -38,6 +42,8 @@
       <mat-error>
         @if (batchIntervalMs.hasError('required')) {
           Batch interval (ms) is required
+        } @else if (batchIntervalMs.hasError('integer')) {
+          Must be a whole number
         } @else if (batchIntervalMs.hasError('min')) {
           Must be at least 50
         } @else if (batchIntervalMs.hasError('max')) {

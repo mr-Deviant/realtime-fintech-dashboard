@@ -2,6 +2,7 @@ import { Component, inject } from "@angular/core";
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
 import { MatButtonModule } from "@angular/material/button";
@@ -9,6 +10,12 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
 import { ProducerService } from "../../producer/producer-service";
 import { SettingsService } from "./settings-service";
+
+// All settings must be whole numbers. Empty values are left to Validators.required.
+const integer: ValidatorFn = (control) =>
+  control.value === null || control.value === '' || Number.isInteger(control.value)
+    ? null
+    : { integer: true };
 
 @Component({
   imports: [
@@ -30,15 +37,15 @@ export class Settings {
   protected readonly form = this.fb.group({
     instrumentCount: this.fb.control<number>(
       this.settingsService.settings().instrumentCount,
-      [ Validators.required, Validators.min(1), Validators.max(50) ]
+      [ Validators.required, integer, Validators.min(1), Validators.max(50) ]
     ),
     updatesPerBatch: this.fb.control<number>(
       this.settingsService.settings().updatesPerBatch,
-      [ Validators.required, Validators.min(1), Validators.max(1000) ]
+      [ Validators.required, integer, Validators.min(1), Validators.max(1000) ]
     ),
     batchIntervalMs: this.fb.control<number>(
       this.settingsService.settings().batchIntervalMs,
-      [ Validators.required, Validators.min(50), Validators.max(2000) ]
+      [ Validators.required, integer, Validators.min(50), Validators.max(2000) ]
     ),
   });
 
