@@ -3,10 +3,14 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "build:wasm": "asc --config wasm/asconfig.json",
+    "prestart": "npm run build:wasm",
     "start": "ng serve",
+    "prebuild": "npm run build:wasm",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:wasm": "npm run build:wasm && vitest run --config wasm/vitest.config.ts"
   },
   "private": true,
   "packageManager": "npm@11.19.1",
@@ -26,6 +30,7 @@
     "@angular/build": "^22.2.5",
     "@angular/cli": "^22.2.5",
     "@angular/compiler-cli": "^22.2.0",
+    "assemblyscript": "^0.28.20",
     "jsdom": "^30.0.0",
     "normalize.css": "^8.0.1",
     "prettier": "^3.8.1",

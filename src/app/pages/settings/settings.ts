@@ -7,6 +7,7 @@ import {
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
+import { ProducerService } from "../../producer/producer-service";
 import { SettingsService } from "./settings-service";
 
 @Component({
@@ -22,6 +23,7 @@ import { SettingsService } from "./settings-service";
 })
 export class Settings {
   private readonly settingsService = inject(SettingsService);
+  private readonly producerService = inject(ProducerService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   // Better to use here Signal Forms, but I and maybe you also, have more experience with Reactive forms
@@ -51,6 +53,6 @@ export class Settings {
       return;
     }
 
-    this.settingsService.apply(this.form.getRawValue());
+    this.producerService.apply(this.form.getRawValue());
   }
 }

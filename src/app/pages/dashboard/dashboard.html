@@ -1,14 +1,35 @@
 <section class="dashboard">
   <h1 class="dashboard__title">Dashboard</h1>
+
+  <div class="dashboard__controls">
+    <button
+      class="dashboard__toggle"
+      mat-flat-button
+      type="button"
+      [disabled]="!canToggle()"
+      (click)="producer.toggle()"
+    >
+      {{ producer.status() === 'paused' ? 'Resume' : 'Pause' }}
+    </button>
+    <p class="dashboard__status" role="status">
+      Producer status: <strong>{{ statusLabel() }}</strong>
+    </p>
+  </div>
+
+  @if (producer.error(); as error) {
+    <p class="dashboard__error" role="alert">{{ error }}</p>
+  }
+
   <div class="dashboard__table-wrapper">
     <table
       class="dashboard__table"
       mat-table
-      [dataSource]="rows()"
+      [dataSource]="producer.metrics()"
+      [trackBy]="trackBySymbol"
     >
       <ng-container matColumnDef="symbol">
         <th mat-header-cell *matHeaderCellDef>Instrument</th>
-        <td mat-cell *matCellDef="let row" scope="row">{{ row.instrument }}</td>
+        <td mat-cell *matCellDef="let row">{{ row.symbol }}</td>
       </ng-container>
 
       <ng-container matColumnDef="lastPrice">
@@ -16,8 +37,9 @@
           Last traded price
         </th>
         <td mat-cell *matCellDef="let row">
-          @if (row.priceCents !== undefined) {
-            {{ row.priceCents / 100 | currency }}
+          <!-- TODO:  Show an unavailable value when a formula's denominator is zero -->
+          @if (row.lastPriceCents !== null) {
+            {{ row.lastPriceCents / 100 | currency }}
           } @else {
             {{ na }}
           }
@@ -29,8 +51,8 @@
           Bid–ask spread
         </th>
         <td mat-cell *matCellDef="let row">
-          @if (row.askCents !== undefined && row.bidCents !== undefined) {
-            {{ (row.askCents - row.bidCents) / 100 | currency }}
+          @if (row.spreadCents !== null) {
+            {{ row.spreadCents / 100 | currency }}
           } @else {
             {{ na }}
           }
@@ -41,13 +63,7 @@
         <th mat-header-cell *matHeaderCellDef>
           Trading volume
         </th>
-        <td mat-cell *matCellDef="let row">
-          @if (row.tradeQuantity !== undefined) {
-            sum({{ row.tradeQuantity | number }})
-          } @else {
-            {{ na }}
-          }
-        </td>
+        <td mat-cell *matCellDef="let row">{{ row.volume | number }}</td>
       </ng-container>
 
       <ng-container matColumnDef="vwap">
@@ -55,8 +71,8 @@
           Volume-weighted average price (VWAP)
         </th>
         <td mat-cell *matCellDef="let row">
-          @if (row.priceCents !== undefined && row.tradeQuantity !== undefined) {
-            sum({{ row.priceCents / 100 }} × {{ row.tradeQuantity }}) / sum({{ row.tradeQuantity }}) currency
+          @if (row.vwapCents !== null) {
+            {{ row.vwapCents / 100 | currency }}
           } @else {
             {{ na }}
           }
@@ -68,8 +84,8 @@
           Order-book imbalance
         </th>
         <td mat-cell *matCellDef="let row">
-          @if (row.bidQuantity !== undefined && row.askQuantity !== undefined) {
-            {{ (row.bidQuantity - row.askQuantity) / (row.bidQuantity + row.askQuantity) }}
+          @if (row.imbalance !== null) {
+            {{ row.imbalance | number: '1.2-2' }}
           } @else {
             {{ na }}
           }

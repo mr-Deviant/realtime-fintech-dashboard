@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { FakeProducerWorker, provideFakeProducerWorker } from "../../producer/fake-producer-worker";
 import { SettingsService } from "./settings-service";
 import { Settings } from "./settings";
 
@@ -17,7 +18,10 @@ describe("Settings", () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [Settings] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [Settings],
+      providers: [provideFakeProducerWorker(new FakeProducerWorker())],
+    }).compileComponents();
     settingsService = TestBed.inject(SettingsService);
     fixture = TestBed.createComponent(Settings);
     await fixture.whenStable();

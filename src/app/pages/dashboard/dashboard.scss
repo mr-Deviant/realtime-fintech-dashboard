@@ -6,6 +6,22 @@
       margin: 0 0 1rem;
     }
 
+    &__controls {
+      align-items: center;
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    &__status {
+      margin: 0;
+    }
+
+    &__error {
+      color: var(--error-color);
+      margin: 0 0 1rem 0;
+    }
+
     &__table-wrapper {
       overflow-x: auto;
     }
