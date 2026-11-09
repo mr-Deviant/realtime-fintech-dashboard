@@ -1,5 +1,3 @@
-import { Provider } from '@angular/core';
-import { PRODUCER_WORKER_FACTORY } from './create-producer-worker';
 import { ProducerCommand, ProducerEvent } from './producer-protocol';
 
 /** Test double for the producer worker: records commands and lets tests emit events. */
@@ -30,7 +28,14 @@ export class FakeProducerWorker {
   }
 }
 
-/** Provides `worker` wherever the app would create the real producer worker. */
-export function provideFakeProducerWorker(worker: FakeProducerWorker): Provider {
-  return { provide: PRODUCER_WORKER_FACTORY, useValue: () => worker as unknown as Worker };
+/**
+ * A class that `new Worker(...)` can be replaced with: constructing it returns `worker`.
+ * Use as `vi.stubGlobal('Worker', fakeWorkerClass(worker))`.
+ */
+export function fakeWorkerClass(worker: FakeProducerWorker): typeof Worker {
+  return class {
+    constructor() {
+      return worker;
+    }
+  } as unknown as typeof Worker;
 }

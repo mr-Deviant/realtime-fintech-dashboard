@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { FakeProducerWorker, provideFakeProducerWorker } from "../../producer/fake-producer-worker";
+import { FakeProducerWorker, fakeWorkerClass } from "../../producer/fake-producer-worker";
 import { ProducerService } from "../../producer/producer-service";
 import { Field, RECORD_FIELDS } from "../../producer/wasm-producer";
 import { Dashboard } from "./dashboard";
@@ -17,14 +17,14 @@ describe("Dashboard", () => {
 
   beforeEach(async () => {
     worker = new FakeProducerWorker();
-    await TestBed.configureTestingModule({
-      imports: [Dashboard],
-      providers: [provideFakeProducerWorker(worker)],
-    }).compileComponents();
+    vi.stubGlobal("Worker", fakeWorkerClass(worker));
+    await TestBed.configureTestingModule({ imports: [Dashboard] }).compileComponents();
 
     fixture = TestBed.createComponent(Dashboard);
     await fixture.whenStable();
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it("shows one row per instrument with unavailable values and zero volume before data arrives", () => {
     const rows = (fixture.nativeElement as HTMLElement).querySelectorAll("tr.mat-mdc-row");
@@ -59,7 +59,7 @@ describe("Dashboard", () => {
     expect(statusText()).toContain("Running");
 
     toggleButton().click();
-    expect(worker.lastCommand).toEqual({ type: "pause", runId: 1 });
+    expect(worker.lastCommand).toEqual({ type: "pause" });
 
     worker.emit({ type: "status", runId: 1, status: "paused" });
     await fixture.whenStable();
@@ -67,7 +67,7 @@ describe("Dashboard", () => {
     expect(statusText()).toContain("Paused");
 
     toggleButton().click();
-    expect(worker.lastCommand).toEqual({ type: "resume", runId: 1 });
+    expect(worker.lastCommand).toEqual({ type: "resume" });
   });
 
   it("shows initialization errors", async () => {

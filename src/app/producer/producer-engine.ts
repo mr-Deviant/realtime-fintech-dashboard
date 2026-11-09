@@ -2,24 +2,19 @@ import { SettingsModel } from '../pages/settings/settings-model';
 import { ProducerCommand, ProducerEvent } from './producer-protocol';
 import { MarketDataGenerator } from './wasm-producer';
 
-export interface Scheduler {
-  setTimeout(callback: () => void, ms: number): unknown;
-  clearTimeout(handle: unknown): void;
-}
-
 export type PostEvent = (event: ProducerEvent, transfer?: Transferable[]) => void;
 
 interface Run {
   readonly runId: number;
   readonly updatesPerBatch: number;
   readonly batchIntervalMs: number;
-  timer: unknown; // Pending timer handle, or undefined when no batch is scheduled
+  timer: ReturnType<typeof setTimeout> | undefined; // Pending timer, or undefined when no batch is scheduled
 }
 
 /**
  * Drives a generator on a timer and reports batches tagged with their run id.
  * Lives in the worker but has no worker dependencies, so it can be unit tested
- * with a fake generator and scheduler.
+ * with a fake generator and fake timers.
  */
 export class ProducerEngine {
   private run: Run | undefined;
@@ -27,8 +22,6 @@ export class ProducerEngine {
   constructor(
     private readonly generator: MarketDataGenerator,
     private readonly post: PostEvent,
-    private readonly scheduler: Scheduler,
-    private readonly nextSeed: () => number,
   ) {}
 
   handle(command: ProducerCommand): void {
@@ -37,22 +30,18 @@ export class ProducerEngine {
         this.start(command.runId, command.settings);
         break;
       case 'pause':
-        // Only if the command’s runId matches the current run and a timer is pending
-        if (this.isCurrent(command.runId) && this.run?.timer !== undefined) {
+        // Only when a run exists and a timer is pending (it's running)
+        if (this.run?.timer !== undefined) {
           this.cancelTimer();
-          this.post({ type: 'status', runId: command.runId, status: 'paused' });
+          this.post({ type: 'status', runId: this.run.runId, status: 'paused' });
         }
         break;
       case 'resume':
-        // Only if the run id matches and no timer is pending (it's paused)
-        if (this.isCurrent(command.runId) && this.run?.timer === undefined) {
+        // Only when a run exists and no timer is pending (it's paused)
+        if (this.run && this.run.timer === undefined) {
           this.schedule();
-          this.post({ type: 'status', runId: command.runId, status: 'running' });
+          this.post({ type: 'status', runId: this.run.runId, status: 'running' });
         }
-        break;
-      case 'stop':
-        this.cancelTimer();
-        this.run = undefined;
         break;
     }
   }
@@ -62,7 +51,9 @@ export class ProducerEngine {
     this.run = undefined;
     try {
       // Re-initialize the Wasm generator with a fresh seed and the new instrument count
-      this.generator.init(this.nextSeed(), settings.instrumentCount);
+      // A random 32-bit seed per run, so every run produces different data
+      const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+      this.generator.init(seed, settings.instrumentCount);
     } catch (error) {
       this.post({ type: 'error', message: errorMessage(error) });
       return;
@@ -79,7 +70,7 @@ export class ProducerEngine {
 
   private tick(): void {
     const run = this.run;
-    if (!run) return; // Do nothing if it was stopped
+    if (!run) return; // Do nothing if the run was replaced or failed
     run.timer = undefined; // Mark timer as fired
     let records: Int32Array;
     try {
@@ -98,19 +89,15 @@ export class ProducerEngine {
   private schedule(): void {
     const run = this.run;
     if (run) {
-      run.timer = this.scheduler.setTimeout(() => this.tick(), run.batchIntervalMs);
+      run.timer = setTimeout(() => this.tick(), run.batchIntervalMs);
     }
   }
 
   private cancelTimer(): void {
     if (this.run?.timer !== undefined) {
-      this.scheduler.clearTimeout(this.run.timer);
+      clearTimeout(this.run.timer);
       this.run.timer = undefined;
     }
-  }
-
-  private isCurrent(runId: number): boolean {
-    return this.run?.runId === runId;
   }
 }
 

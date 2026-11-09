@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { FakeProducerWorker, provideFakeProducerWorker } from "../../producer/fake-producer-worker";
+import { FakeProducerWorker, fakeWorkerClass } from "../../producer/fake-producer-worker";
 import { SettingsService } from "./settings-service";
 import { Settings } from "./settings";
 
@@ -18,14 +18,14 @@ describe("Settings", () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Settings],
-      providers: [provideFakeProducerWorker(new FakeProducerWorker())],
-    }).compileComponents();
+    vi.stubGlobal("Worker", fakeWorkerClass(new FakeProducerWorker()));
+    await TestBed.configureTestingModule({ imports: [Settings] }).compileComponents();
     settingsService = TestBed.inject(SettingsService);
     fixture = TestBed.createComponent(Settings);
     await fixture.whenStable();
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it("shows the defaults", () => {
     expect(inputs().map((input) => input.value)).toEqual(["5", "100", "500"]);

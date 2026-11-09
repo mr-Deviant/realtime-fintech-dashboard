@@ -1,7 +1,6 @@
 import { DestroyRef, Service, inject, signal } from '@angular/core';
 import { SettingsModel } from '../pages/settings/settings-model';
 import { SettingsService } from '../pages/settings/settings-service';
-import { PRODUCER_WORKER_FACTORY } from './create-producer-worker';
 import { InstrumentMetrics, MetricsAccumulator, symbolsFor } from './metrics';
 import { ProducerCommand, ProducerEvent, ProducerStatus } from './producer-protocol';
 
@@ -30,7 +29,8 @@ export class ProducerService {
 
   constructor() {
     try {
-      const worker = inject(PRODUCER_WORKER_FACTORY)();
+      // The Angular builder bundles the worker only when it sees this exact new Worker(new URL(...)) form
+      const worker = new Worker(new URL('./producer.worker', import.meta.url), { type: 'module' });
       worker.onmessage = ({ data }: MessageEvent<ProducerEvent>) => this.onEvent(data);
       worker.onerror = (event) => this.fail(event.message || 'The producer worker failed to load');
       this.worker = worker;
@@ -39,8 +39,7 @@ export class ProducerService {
     }
 
     inject(DestroyRef).onDestroy(() => {
-      this.send({ type: 'stop' });
-      this.worker?.terminate();
+      this.worker?.terminate(); // Stops the timer and frees the Wasm instance
       this.worker = undefined;
     });
 
@@ -55,11 +54,11 @@ export class ProducerService {
   }
 
   pause(): void {
-    this.send({ type: 'pause', runId: this.runId });
+    this.send({ type: 'pause' });
   }
 
   resume(): void {
-    this.send({ type: 'resume', runId: this.runId });
+    this.send({ type: 'resume' });
   }
 
   toggle(): void {

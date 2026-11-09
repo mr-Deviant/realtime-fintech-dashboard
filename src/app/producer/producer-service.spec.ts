@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { DEFAULT_SETTINGS, SettingsService } from '../pages/settings/settings-service';
-import { PRODUCER_WORKER_FACTORY } from './create-producer-worker';
-import { FakeProducerWorker, provideFakeProducerWorker } from './fake-producer-worker';
+import { FakeProducerWorker, fakeWorkerClass } from './fake-producer-worker';
 import { ProducerService } from './producer-service';
 import { Field, RECORD_FIELDS } from './wasm-producer';
 
@@ -25,9 +24,11 @@ describe('ProducerService', () => {
 
   beforeEach(() => {
     worker = new FakeProducerWorker();
-    TestBed.configureTestingModule({ providers: [provideFakeProducerWorker(worker)] });
+    vi.stubGlobal('Worker', fakeWorkerClass(worker));
     service = TestBed.inject(ProducerService);
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it('starts the first run with the default settings and no data', () => {
     expect(worker.commands).toEqual([{ type: 'start', runId: 1, settings: DEFAULT_SETTINGS }]);
@@ -101,18 +102,18 @@ describe('ProducerService', () => {
 
     it('sends pause and resume for the current run', () => {
       service.pause();
-      expect(worker.lastCommand).toEqual({ type: 'pause', runId: 1 });
+      expect(worker.lastCommand).toEqual({ type: 'pause' });
       service.resume();
-      expect(worker.lastCommand).toEqual({ type: 'resume', runId: 1 });
+      expect(worker.lastCommand).toEqual({ type: 'resume' });
     });
 
     it('toggles according to the current status', () => {
       service.toggle();
-      expect(worker.lastCommand).toEqual({ type: 'pause', runId: 1 });
+      expect(worker.lastCommand).toEqual({ type: 'pause' });
 
       worker.emit({ type: 'status', runId: 1, status: 'paused' });
       service.toggle();
-      expect(worker.lastCommand).toEqual({ type: 'resume', runId: 1 });
+      expect(worker.lastCommand).toEqual({ type: 'resume' });
     });
 
     it('keeps values and totals while paused and after resuming', () => {
@@ -157,24 +158,22 @@ describe('ProducerService', () => {
 
   it('reports a worker that cannot be created', () => {
     TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      providers: [
-        {
-          provide: PRODUCER_WORKER_FACTORY,
-          useValue: () => {
-            throw new Error('Workers are not supported');
-          },
-        },
-      ],
-    });
+    vi.stubGlobal(
+      'Worker',
+      class {
+        constructor() {
+          throw new Error('Workers are not supported');
+        }
+      },
+    );
     const failing = TestBed.inject(ProducerService);
     expect(failing.status()).toBe('error');
     expect(failing.error()).toContain('Workers are not supported');
   });
 
-  it('stops and terminates the worker when destroyed', () => {
+  it('terminates the worker when destroyed', () => {
+    expect(worker.terminated).toBe(false);
     TestBed.resetTestingModule();
-    expect(worker.lastCommand).toEqual({ type: 'stop' });
     expect(worker.terminated).toBe(true);
   });
 });
