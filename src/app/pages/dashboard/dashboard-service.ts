@@ -43,6 +43,8 @@ export class DashboardService {
   readonly metrics = this._metrics.asReadonly();
 
   constructor() {
+    this.reset(); // Rows are visible before the worker is ready
+
     if (typeof Worker !== 'undefined') {
       this.worker = new Worker(new URL("../../app.worker", import.meta.url));
       this.worker.onmessage = ({ data }: MessageEvent<WorkerEvent>) => {
@@ -79,6 +81,16 @@ export class DashboardService {
   }
 
   public start(): void {
+    this.reset();
+
+    this._status.set('running');
+    this.runId++;
+    // TODO: omit seed
+    this.worker?.postMessage({ type: 'start', settings: { runId: this.runId, seed: 1, ...this.settings() } });
+  }
+
+  // Zero totals and N/A values for every instrument
+  private reset(): void {
     this.symbols = this.symbolsFor(this.settings().instrumentCount);
     this.totals = this.symbols.map(() => ({
       lastPriceCents: null,
@@ -90,11 +102,6 @@ export class DashboardService {
       notionalCents: 0,
     }));
     this._metrics.set(this.snapshot()); // Show the cleared values right away, not after the first batch
-
-    this._status.set('running');
-    this.runId++;
-    // TODO: omit seed
-    this.worker?.postMessage({ type: 'start', settings: { runId: this.runId, seed: 1, ...this.settings() } });
   }
 
   public pause(): void {
