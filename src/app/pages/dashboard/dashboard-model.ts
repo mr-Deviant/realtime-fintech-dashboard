@@ -1,3 +1,9 @@
+export interface SettingsModel {
+  instrumentCount: number;
+  updatesPerBatch: number;
+  batchIntervalMs: number;
+}
+
 // Dashboard values for one instrument. `null` means unavailable.
 export interface InstrumentMetrics {
   readonly symbol: string;

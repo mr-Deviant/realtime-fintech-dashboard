@@ -2,7 +2,7 @@ import { CurrencyPipe, DecimalPipe } from "@angular/common";
 import { Component, computed, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTableModule } from "@angular/material/table";
-import { InstrumentMetrics } from "../../producer/metrics";
+import { InstrumentMetrics } from './dashboard-model';
 import { DashboardService } from './dashboard-service';
 
 @Component({

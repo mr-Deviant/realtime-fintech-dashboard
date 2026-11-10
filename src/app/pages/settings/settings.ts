@@ -8,7 +8,7 @@ import {
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { SettingsService } from "./settings-service";
+import {  DashboardService} from '../dashboard/dashboard-service';
 
 // All settings must be whole numbers. Empty values are left to Validators.required.
 const integer: ValidatorFn = (control) =>
@@ -28,21 +28,21 @@ const integer: ValidatorFn = (control) =>
   templateUrl: "./settings.html",
 })
 export class Settings {
-  private readonly settingsService = inject(SettingsService);
+  private readonly dashboardService = inject(DashboardService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   // Better to use here Signal Forms, but I and maybe you also, have more experience with Reactive forms
   protected readonly form = this.fb.group({
     instrumentCount: this.fb.control<number>(
-      this.settingsService.settings().instrumentCount,
+      this.dashboardService.settings().instrumentCount,
       [ Validators.required, integer, Validators.min(1), Validators.max(50) ]
     ),
     updatesPerBatch: this.fb.control<number>(
-      this.settingsService.settings().updatesPerBatch,
+      this.dashboardService.settings().updatesPerBatch,
       [ Validators.required, integer, Validators.min(1), Validators.max(1000) ]
     ),
     batchIntervalMs: this.fb.control<number>(
-      this.settingsService.settings().batchIntervalMs,
+      this.dashboardService.settings().batchIntervalMs,
       [ Validators.required, integer, Validators.min(50), Validators.max(2000) ]
     ),
   });
@@ -58,6 +58,6 @@ export class Settings {
       return;
     }
 
-    this.settingsService.apply(this.form.getRawValue());
+    this.dashboardService.applySettings(this.form.getRawValue());
   }
 }

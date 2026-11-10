@@ -1,7 +1,5 @@
 import { DestroyRef, inject, Service, signal } from '@angular/core';
-import { SettingsService } from '../settings/settings-service';
-import {InstrumentMetrics, Totals} from './dashboard-model';
-
+import { InstrumentMetrics, SettingsModel, Totals } from './dashboard-model';
 
 export type WorkerEvent =
   | { readonly type: 'error'; readonly message: string }
@@ -27,9 +25,14 @@ const GREEK = [
   'NUUU', 'XIII', 'OMIC', 'PIII', 'RHOO', 'SIGM', 'TAUU', 'UPSI', 'PHII', 'CHII', 'PSII', 'OMEG',
 ];
 
+export const DEFAULT_SETTINGS: SettingsModel = {
+  instrumentCount: 5,
+  updatesPerBatch: 100,
+  batchIntervalMs: 500,
+};
+
 @Service()
 export class DashboardService {
-  private settingsService = inject(SettingsService);
   private worker?: Worker;
   private totals!: Totals[];
   private symbols!: string[];
@@ -65,8 +68,15 @@ export class DashboardService {
     });
   }
 
+  public readonly settings = signal<SettingsModel>(DEFAULT_SETTINGS);
+
+  applySettings(settings: SettingsModel): void {
+    this.settings.set(settings);
+    this.start();
+  }
+
   public start(): void {
-    this.symbols = this.symbolsFor(this.settingsService.settings().instrumentCount);
+    this.symbols = this.symbolsFor(this.settings().instrumentCount);
     this.totals = this.symbols.map(() => ({
       lastPriceCents: null,
       bidCents: null,
@@ -79,7 +89,7 @@ export class DashboardService {
 
     this._status.set('running');
     // TODO: omit seed
-    this.worker?.postMessage({ type: 'start', settings: { seed: 1, ...this.settingsService.settings() } });
+    this.worker?.postMessage({ type: 'start', settings: { seed: 1, ...this.settings() } });
   }
 
   public pause(): void {
