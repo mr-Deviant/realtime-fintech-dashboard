@@ -1,5 +1,5 @@
 import { Service, signal } from '@angular/core';
-import {SettingsModel} from './settings-model';
+import { SettingsModel } from './settings-model';
 
 export const DEFAULT_SETTINGS: SettingsModel = {
   instrumentCount: 5,
@@ -9,7 +9,7 @@ export const DEFAULT_SETTINGS: SettingsModel = {
 
 @Service()
 export class SettingsService {
-  readonly settings = signal<SettingsModel>(DEFAULT_SETTINGS);
+  public readonly settings = signal<SettingsModel>(DEFAULT_SETTINGS);
 
   apply(settings: SettingsModel): void {
     this.settings.set(settings);

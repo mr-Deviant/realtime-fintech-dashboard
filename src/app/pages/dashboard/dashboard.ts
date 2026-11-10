@@ -3,7 +3,7 @@ import { Component, computed, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTableModule } from "@angular/material/table";
 import { InstrumentMetrics } from "../../producer/metrics";
-import { ProducerService } from "../../producer/producer-service";
+import { DashboardService } from './dashboard-service';
 
 @Component({
   imports: [CurrencyPipe, DecimalPipe, MatButtonModule, MatTableModule],
@@ -12,25 +12,25 @@ import { ProducerService } from "../../producer/producer-service";
   templateUrl: "./dashboard.html",
 })
 export class Dashboard {
-  protected readonly producer = inject(ProducerService);
+  protected readonly dashboardService = inject(DashboardService);
 
   protected readonly na = 'N/A';
 
   protected readonly columns = ["symbol", "lastPrice", "spread", "volume", "vwap", "imbalance"];
 
   protected readonly canToggle = computed(() => {
-    const status = this.producer.status();
+    const status = this.dashboardService.status();
     return status === 'running' || status === 'paused';
   });
 
   protected readonly statusLabel = computed(() => {
-    switch (this.producer.status()) {
+    switch (this.dashboardService.status()) {
       case 'running':
         return 'Running';
       case 'paused':
         return 'Paused';
-      case 'error':
-        return 'Error';
+      // case 'error':
+      //   return 'Error';
       default:
         return 'Starting…';
     }

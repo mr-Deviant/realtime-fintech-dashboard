@@ -7,24 +7,24 @@
       mat-flat-button
       type="button"
       [disabled]="!canToggle()"
-      (click)="producer.toggle()"
+      (click)="dashboardService.toggle()"
     >
-      {{ producer.status() === 'paused' ? 'Resume' : 'Pause' }}
+      {{ dashboardService.status() === 'paused' ? 'Resume' : 'Pause' }}
     </button>
     <p class="dashboard__status" role="status">
       Producer status: <strong>{{ statusLabel() }}</strong>
     </p>
   </div>
 
-  @if (producer.error(); as error) {
-    <p class="dashboard__error" role="alert">{{ error }}</p>
-  }
+<!--  @if (dashboardService.error(); as error) {-->
+<!--    <p class="dashboard__error" role="alert">{{ error }}</p>-->
+<!--  }-->
 
   <div class="dashboard__table-wrapper">
     <table
       class="dashboard__table"
       mat-table
-      [dataSource]="producer.metrics()"
+      [dataSource]="dashboardService.metrics()"
       [trackBy]="trackBySymbol"
     >
       <ng-container matColumnDef="symbol">

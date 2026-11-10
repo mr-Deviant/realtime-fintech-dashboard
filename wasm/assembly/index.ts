@@ -42,6 +42,7 @@ function clamp(value: i32, min: i32, max: i32): i32 {
 }
 
 // Export constants instead of duplication them in service
+// TODO: delete
 export function recordFields(): i32 {
   return RECORD_FIELDS;
 }

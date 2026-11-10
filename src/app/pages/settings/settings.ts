@@ -8,7 +8,6 @@ import {
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
-import { ProducerService } from "../../producer/producer-service";
 import { SettingsService } from "./settings-service";
 
 // All settings must be whole numbers. Empty values are left to Validators.required.
@@ -30,7 +29,6 @@ const integer: ValidatorFn = (control) =>
 })
 export class Settings {
   private readonly settingsService = inject(SettingsService);
-  private readonly producerService = inject(ProducerService);
   private readonly fb = inject(NonNullableFormBuilder);
 
   // Better to use here Signal Forms, but I and maybe you also, have more experience with Reactive forms
@@ -60,6 +58,6 @@ export class Settings {
       return;
     }
 
-    this.producerService.apply(this.form.getRawValue());
+    this.settingsService.apply(this.form.getRawValue());
   }
 }
