@@ -89,6 +89,7 @@ export class DashboardService {
       volume: 0,
       notionalCents: 0,
     }));
+    this._metrics.set(this.snapshot()); // Show the cleared values right away, not after the first batch
 
     this._status.set('running');
     this.runId++;
