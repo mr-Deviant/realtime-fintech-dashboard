@@ -44,6 +44,7 @@ export class Producer {
 
   public start(settings: Settings): void {
     this.settings = settings;
+    this.isPaused = false; // A new run always starts generating, even if the previous one was paused
 
     this.stopTimer();
 
