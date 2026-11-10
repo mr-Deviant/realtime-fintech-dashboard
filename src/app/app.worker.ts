@@ -8,7 +8,7 @@ interface Wasm {
   outputPtr(): number; // byte offset of the results in memory
 }
 
-type Settings = { runId: number; seed: number; instrumentCount: number; updatesPerBatch: number; batchIntervalMs: number };
+type Settings = { runId: number; instrumentCount: number; updatesPerBatch: number; batchIntervalMs: number };
 type Command =
   | { type: 'start'; settings: Settings }
   | { type: 'pause' }
@@ -48,7 +48,9 @@ export class Producer {
 
     this.stopTimer();
 
-    if (!this.wasm?.init(this.settings.seed, this.settings.instrumentCount)) {
+    // A random seed makes every run different (the Wasm tests use fixed seeds instead)
+    const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+    if (!this.wasm?.init(seed, this.settings.instrumentCount)) {
       postMessage({ type: 'error', message: 'Wasm init rejected the instrument count' });
       return;
     }

@@ -88,8 +88,7 @@ export class DashboardService {
     this.error.set('');
     this._status.set('running');
     this.runId++;
-    // TODO: omit seed
-    this.worker?.postMessage({ type: 'start', settings: { runId: this.runId, seed: 1, ...this.settings() } });
+    this.worker?.postMessage({ type: 'start', settings: { runId: this.runId, ...this.settings() } });
   }
 
   private fail(message: string): void {
