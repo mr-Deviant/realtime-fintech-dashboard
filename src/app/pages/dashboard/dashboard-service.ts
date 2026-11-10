@@ -37,8 +37,9 @@ export class DashboardService {
   private runId = 0;
   private totals!: Totals[];
   private symbols!: string[];
-  private readonly _status = signal<'initializing' | 'running' | 'paused'>('initializing');
+  private readonly _status = signal<'initializing' | 'running' | 'paused' | 'error'>('initializing');
   public readonly status = this._status.asReadonly();
+  public readonly error = signal('');
   private readonly _metrics = signal<InstrumentMetrics[]>([]);
   readonly metrics = this._metrics.asReadonly();
 
@@ -59,12 +60,14 @@ export class DashboardService {
             this._metrics.set(this.snapshot());
             break;
           case 'error':
-            console.error(data.message);
+            this.fail(data.message);
             break;
         }
       };
+      // The worker script itself failed to load or crashed
+      this.worker.onerror = () => this.fail('The producer worker crashed');
     } else {
-      // Web Workers are not supported in this environment.
+      this.fail('Web Workers are not supported in this browser');
     }
 
     inject(DestroyRef).onDestroy(() => {
@@ -82,11 +85,16 @@ export class DashboardService {
 
   public start(): void {
     this.reset();
-
+    this.error.set('');
     this._status.set('running');
     this.runId++;
     // TODO: omit seed
     this.worker?.postMessage({ type: 'start', settings: { runId: this.runId, seed: 1, ...this.settings() } });
+  }
+
+  private fail(message: string): void {
+    this.error.set(message);
+    this._status.set('error');
   }
 
   // Zero totals and N/A values for every instrument

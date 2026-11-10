@@ -29,8 +29,8 @@ export class Dashboard {
         return 'Running';
       case 'paused':
         return 'Paused';
-      // case 'error':
-      //   return 'Error';
+      case 'error':
+        return 'Error';
       default:
         return 'Starting…';
     }

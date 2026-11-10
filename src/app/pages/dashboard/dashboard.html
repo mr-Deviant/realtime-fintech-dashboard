@@ -16,9 +16,9 @@
     </p>
   </div>
 
-<!--  @if (dashboardService.error(); as error) {-->
-<!--    <p class="dashboard__error" role="alert">{{ error }}</p>-->
-<!--  }-->
+  @if (dashboardService.error(); as error) {
+    <p class="dashboard__error" role="alert">{{ error }}</p>
+  }
 
   <div class="dashboard__table-wrapper">
     <table
@@ -37,7 +37,6 @@
           Last traded price
         </th>
         <td mat-cell *matCellDef="let row">
-          <!-- TODO:  Show an unavailable value when a formula's denominator is zero -->
           @if (row.lastPriceCents !== null) {
             {{ row.lastPriceCents / 100 | currency }}
           } @else {
