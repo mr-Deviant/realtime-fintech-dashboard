@@ -1,8 +1,26 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { Field, RECORD_FIELDS, WasmProducer } from '../../src/app/producer/wasm-producer';
 
 const wasmBytes = readFileSync(new URL('../../public/wasm/producer.wasm', import.meta.url));
+
+// What the compiled module exports (see wasm/assembly/index.ts)
+interface Wasm {
+  memory: WebAssembly.Memory;
+  init(seed: number, count: number): number; // 1 = ok, 0 = count out of range
+  generate(count: number): number; // number of updates written, 0 = rejected
+  outputPtr(): number;
+}
+
+const RECORD_FIELDS = 7; // i32 values per update
+const Field = {
+  Instrument: 0,
+  PriceCents: 1,
+  TradeQuantity: 2,
+  BidCents: 3,
+  AskCents: 4,
+  BidQuantity: 5,
+  AskQuantity: 6,
+} as const;
 
 interface Update {
   instrument: number;
@@ -31,11 +49,23 @@ function decode(records: Int32Array): Update[] {
 }
 
 describe('Wasm market-data generator', () => {
-  let producer: WasmProducer;
+  let wasm: Wasm;
 
   beforeAll(async () => {
-    producer = await WasmProducer.instantiate(wasmBytes);
+    const { instance } = await WebAssembly.instantiate(wasmBytes, {
+      env: { abort: () => { throw new Error('Wasm aborted'); } },
+    });
+    wasm = instance.exports as unknown as Wasm;
   });
+
+  const producer = {
+    init: (seed: number, count: number) => wasm.init(seed, count) === 1,
+    // Copies the generated numbers out of Wasm memory, like the worker does. Empty when rejected.
+    generate: (size: number) => {
+      const written = wasm.generate(size);
+      return new Int32Array(wasm.memory.buffer, wasm.outputPtr(), written * RECORD_FIELDS).slice();
+    },
+  };
 
   it.each([1, 100, 1000])('returns exactly %i updates per batch', (size) => {
     producer.init(42, 5);
@@ -104,10 +134,15 @@ describe('Wasm market-data generator', () => {
   });
 
   it('rejects out-of-range instrument counts and batch sizes', () => {
-    expect(() => producer.init(1, 0)).toThrow(RangeError);
-    expect(() => producer.init(1, 51)).toThrow(RangeError);
-    producer.init(1, 5);
-    expect(() => producer.generate(0)).toThrow(RangeError);
-    expect(() => producer.generate(1001)).toThrow(RangeError);
+    expect(producer.init(1, 0)).toBe(false);
+    expect(producer.init(1, 51)).toBe(false);
+    expect(producer.init(1, 5)).toBe(true);
+    expect(producer.generate(0)).toHaveLength(0);
+    expect(producer.generate(1001)).toHaveLength(0);
+  });
+
+  it('accepts a zero seed', () => {
+    expect(producer.init(0, 5)).toBe(true);
+    expect(producer.generate(10)).toHaveLength(10 * RECORD_FIELDS);
   });
 });

@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { FakeProducerWorker, fakeWorkerClass } from "../../producer/fake-producer-worker";
-import { DEFAULT_SETTINGS, SettingsService } from "./settings-service";
+import { FakeWorker } from "../../testing/fake-worker";
+import { DashboardService, DEFAULT_SETTINGS } from "../dashboard/dashboard-service";
 import { Settings } from "./settings";
 
 describe("Settings", () => {
   let fixture: ComponentFixture<Settings>;
-  let settingsService: SettingsService;
-  let worker: FakeProducerWorker;
+  let dashboardService: DashboardService;
+  let worker: FakeWorker;
 
   const inputs = () =>
     Array.from(fixture.nativeElement.querySelectorAll("input")) as HTMLInputElement[];
@@ -19,10 +19,11 @@ describe("Settings", () => {
   }
 
   beforeEach(async () => {
-    worker = new FakeProducerWorker();
-    vi.stubGlobal("Worker", fakeWorkerClass(worker));
+    vi.stubGlobal("Worker", FakeWorker);
     await TestBed.configureTestingModule({ imports: [Settings] }).compileComponents();
-    settingsService = TestBed.inject(SettingsService);
+    dashboardService = TestBed.inject(DashboardService);
+    worker = FakeWorker.instance;
+    worker.emit({ type: "ready" }); // The initial run
     fixture = TestBed.createComponent(Settings);
     await fixture.whenStable();
   });
@@ -34,9 +35,9 @@ describe("Settings", () => {
     expect(applyButton().disabled).toBe(false);
   });
 
-  it("does not touch the store while editing", async () => {
+  it("does not change the active settings while editing", async () => {
     await type(inputs()[0], "10");
-    expect(settingsService.settings().instrumentCount).toBe(5);
+    expect(dashboardService.settings().instrumentCount).toBe(5);
   });
 
   it("does not start a new run while editing", async () => {
@@ -52,15 +53,25 @@ describe("Settings", () => {
     await fixture.whenStable();
 
     const applied = { instrumentCount: 10, updatesPerBatch: 250, batchIntervalMs: 100 };
-    expect(settingsService.settings()).toEqual(applied);
-    expect(worker.lastCommand).toEqual({ type: "start", runId: 2, settings: applied });
+    expect(dashboardService.settings()).toEqual(applied);
+    expect(worker.lastCommand).toEqual({ type: "start", settings: { runId: 2, ...applied } });
   });
 
   it("starts a new run even when the values are unchanged", async () => {
     applyButton().click();
     await fixture.whenStable();
 
-    expect(worker.lastCommand).toEqual({ type: "start", runId: 2, settings: DEFAULT_SETTINGS });
+    expect(worker.lastCommand).toEqual({ type: "start", settings: { runId: 2, ...DEFAULT_SETTINGS } });
+  });
+
+  it("clears the previous run's values when applied", async () => {
+    worker.emit({ type: "batch", runId: 1, records: Int32Array.of(0, 10000, 10, 9999, 10001, 100, 300) });
+    expect(dashboardService.metrics()[0].volume).toBe(10);
+
+    applyButton().click();
+    await fixture.whenStable();
+
+    expect(dashboardService.metrics()[0].volume).toBe(0);
   });
 
   it.each([
@@ -80,7 +91,7 @@ describe("Settings", () => {
     await fixture.whenStable();
 
     // Nothing is applied and no new run starts...
-    expect(settingsService.settings()).toEqual(DEFAULT_SETTINGS);
+    expect(dashboardService.settings()).toEqual(DEFAULT_SETTINGS);
     expect(worker.commands).toHaveLength(1);
     // ...and the user is told why.
     expect(fixture.nativeElement.querySelector("mat-error")).not.toBeNull();

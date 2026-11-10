@@ -24,3 +24,8 @@ export interface Totals {
   /** sum(tradePrice × tradeQuantity), in cents. */
   notionalCents: number;
 }
+
+export type WorkerEvent =
+  | { readonly type: 'error'; readonly message: string }
+  | { readonly type: 'ready' }
+  | { readonly type: 'batch'; readonly runId: number; readonly records: Int32Array };

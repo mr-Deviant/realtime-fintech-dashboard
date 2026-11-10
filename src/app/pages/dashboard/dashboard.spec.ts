@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { FakeProducerWorker, fakeWorkerClass } from "../../producer/fake-producer-worker";
-import { ProducerService } from "../../producer/producer-service";
-import { Field, RECORD_FIELDS } from "../../producer/wasm-producer";
+import { batch, FakeWorker } from "../../testing/fake-worker";
 import { Dashboard } from "./dashboard";
+import { DashboardService } from "./dashboard-service";
 
 describe("Dashboard", () => {
   let fixture: ComponentFixture<Dashboard>;
-  let worker: FakeProducerWorker;
+  let worker: FakeWorker;
 
   const cellTexts = (row: number) =>
     Array.from(
@@ -16,11 +15,11 @@ describe("Dashboard", () => {
   const statusText = () => fixture.nativeElement.querySelector('[role="status"]').textContent.trim();
 
   beforeEach(async () => {
-    worker = new FakeProducerWorker();
-    vi.stubGlobal("Worker", fakeWorkerClass(worker));
+    vi.stubGlobal("Worker", FakeWorker);
     await TestBed.configureTestingModule({ imports: [Dashboard] }).compileComponents();
 
     fixture = TestBed.createComponent(Dashboard);
+    worker = FakeWorker.instance;
     await fixture.whenStable();
   });
 
@@ -33,15 +32,8 @@ describe("Dashboard", () => {
   });
 
   it("shows formatted metrics once a batch arrives", async () => {
-    const records = new Int32Array(RECORD_FIELDS);
-    records[Field.Instrument] = 0;
-    records[Field.PriceCents] = 10200;
-    records[Field.TradeQuantity] = 30;
-    records[Field.BidCents] = 10196;
-    records[Field.AskCents] = 10200;
-    records[Field.BidQuantity] = 600;
-    records[Field.AskQuantity] = 400;
-    worker.emit({ type: "batch", runId: 1, records });
+    worker.emit({ type: "ready" });
+    worker.emit(batch(1, [0, 10200, 30, 10196, 10200, 600, 400]));
     await fixture.whenStable();
 
     expect(cellTexts(0)).toEqual(["ALFA", "$102.00", "$0.04", "30", "$102.00", "0.20"]);
@@ -53,40 +45,43 @@ describe("Dashboard", () => {
   });
 
   it("pauses and resumes through the toggle", async () => {
-    worker.emit({ type: "status", runId: 1, status: "running" });
+    worker.emit({ type: "ready" });
     await fixture.whenStable();
     expect(toggleButton().textContent).toContain("Pause");
     expect(statusText()).toContain("Running");
 
     toggleButton().click();
-    expect(worker.lastCommand).toEqual({ type: "pause" });
-
-    worker.emit({ type: "status", runId: 1, status: "paused" });
     await fixture.whenStable();
+    expect(worker.lastCommand).toEqual({ type: "pause" });
     expect(toggleButton().textContent).toContain("Resume");
     expect(statusText()).toContain("Paused");
 
     toggleButton().click();
+    await fixture.whenStable();
     expect(worker.lastCommand).toEqual({ type: "resume" });
+    expect(statusText()).toContain("Running");
   });
 
   it("shows initialization errors", async () => {
-    worker.emit({ type: "error", message: "Failed to initialise the Wasm producer: nope" });
+    worker.emit({ type: "error", message: "Failed to load Wasm: nope" });
     await fixture.whenStable();
 
     const alert = fixture.nativeElement.querySelector('[role="alert"]');
-    expect(alert.textContent).toContain("Failed to initialise the Wasm producer");
+    expect(alert.textContent).toContain("Failed to load Wasm");
+    expect(statusText()).toContain("Error");
     expect(toggleButton().disabled).toBe(true);
   });
 
   it("keeps the active run when the page is re-created", async () => {
-    worker.emit({ type: "status", runId: 1, status: "paused" });
+    worker.emit({ type: "ready" });
+    await fixture.whenStable(); // The button is enabled once the page has rendered the running status
+    toggleButton().click();
     fixture.destroy();
 
     const again = TestBed.createComponent(Dashboard);
     await again.whenStable();
 
-    expect(TestBed.inject(ProducerService).status()).toBe("paused");
-    expect(worker.commands.filter((c) => c.type === "start")).toHaveLength(1);
+    expect(TestBed.inject(DashboardService).status()).toBe("paused");
+    expect(worker.commands.filter((command) => (command as { type: string }).type === "start")).toHaveLength(1);
   });
 });

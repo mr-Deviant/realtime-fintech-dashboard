@@ -1,15 +1,10 @@
 import { DestroyRef, inject, Service, signal } from '@angular/core';
-import { InstrumentMetrics, SettingsModel, Totals } from './dashboard-model';
+import { InstrumentMetrics, SettingsModel, Totals, WorkerEvent } from './dashboard-model';
 
-export type WorkerEvent =
-  | { readonly type: 'error'; readonly message: string }
-  | { readonly type: 'ready' }
-  | { readonly type: 'batch'; readonly runId: number; readonly records: Int32Array };
-
-/** Number of i32 values per generated update in a batch buffer. */
+// Number of i32 values per generated update in a batch buffer
 export const RECORD_FIELDS = 7;
 
-/** Offsets of each field inside one record of a batch buffer. */
+// Offsets of each field inside one record of a batch buffer
 export const Field = {
   Instrument: 0,
   PriceCents: 1,
