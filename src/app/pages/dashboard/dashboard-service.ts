@@ -4,7 +4,7 @@ import { InstrumentMetrics, SettingsModel, Totals } from './dashboard-model';
 export type WorkerEvent =
   | { readonly type: 'error'; readonly message: string }
   | { readonly type: 'ready' }
-  | { readonly type: 'batch'; readonly records: Int32Array };
+  | { readonly type: 'batch'; readonly runId: number; readonly records: Int32Array };
 
 /** Number of i32 values per generated update in a batch buffer. */
 export const RECORD_FIELDS = 7;
@@ -34,6 +34,7 @@ export const DEFAULT_SETTINGS: SettingsModel = {
 @Service()
 export class DashboardService {
   private worker?: Worker;
+  private runId = 0;
   private totals!: Totals[];
   private symbols!: string[];
   private readonly _status = signal<'initializing' | 'running' | 'paused'>('initializing');
@@ -50,6 +51,8 @@ export class DashboardService {
             this.start();
             break;
           case 'batch':
+            // Ignore batches that the worker generated for a previous run
+            if (data.runId !== this.runId) break;
             this.add(data.records);
             this._metrics.set(this.snapshot());
             break;
@@ -88,8 +91,9 @@ export class DashboardService {
     }));
 
     this._status.set('running');
+    this.runId++;
     // TODO: omit seed
-    this.worker?.postMessage({ type: 'start', settings: { seed: 1, ...this.settings() } });
+    this.worker?.postMessage({ type: 'start', settings: { runId: this.runId, seed: 1, ...this.settings() } });
   }
 
   public pause(): void {

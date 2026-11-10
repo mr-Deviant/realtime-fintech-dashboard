@@ -8,7 +8,7 @@ interface Wasm {
   outputPtr(): number; // byte offset of the results in memory
 }
 
-type Settings = { seed: number; instrumentCount: number; updatesPerBatch: number; batchIntervalMs: number };
+type Settings = { runId: number; seed: number; instrumentCount: number; updatesPerBatch: number; batchIntervalMs: number };
 type Command =
   | { type: 'start'; settings: Settings }
   | { type: 'pause' }
@@ -106,7 +106,7 @@ export class Producer {
       this.wasm.outputPtr(),
       written * this.FIELDS_PER_UPDATE,
     ).slice();
-    postMessage({ type: 'batch', records }, [records.buffer]);
+    postMessage({ type: 'batch', runId: this.settings.runId, records }, [records.buffer]);
   }
 }
 
