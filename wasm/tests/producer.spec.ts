@@ -91,9 +91,9 @@ describe('Wasm market-data generator', () => {
   });
 
   it('only emits instruments within the configured count', () => {
-    producer.init(3, 2);
-    const instruments = new Set(decode(producer.generate(1000)).map((u) => u.instrument));
-    expect(instruments).toEqual(new Set([0, 1]));
+    producer.init(3, 2); // 2 instruments
+    const instruments = new Set(decode(producer.generate(1000)).map((u) => u.instrument)); // generate 1000 updates
+    expect(instruments).toEqual(new Set([0, 1])); // updates was only for 2 instruments
   });
 
   it('evolves prices from previous values instead of jumping randomly', () => {
@@ -117,6 +117,7 @@ describe('Wasm market-data generator', () => {
   });
 
   it('is deterministic for a fixed seed and resets on init', () => {
+    // Same seed always gives the same data
     producer.init(1234, 5);
     const a = producer.generate(100);
     producer.generate(100); // advance state
@@ -126,6 +127,7 @@ describe('Wasm market-data generator', () => {
   });
 
   it('returns copies that are not overwritten by later batches', () => {
+    // Returns a copy, not a live view into a buffer
     producer.init(9, 3);
     const first = producer.generate(10);
     const snapshot = first.slice();

@@ -9,6 +9,7 @@ export class FakeWorker {
   terminated = false;
 
   constructor() {
+    // Store the instance, so tests can reach a worker that the page created itself
     FakeWorker.instance = this;
   }
 

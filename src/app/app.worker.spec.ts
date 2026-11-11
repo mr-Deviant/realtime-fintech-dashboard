@@ -24,6 +24,7 @@ describe('app.worker', () => {
 
   // The worker file starts itself when imported, so each test imports a fresh copy
   async function startWorker(options: { loadFails?: boolean } = {}): Promise<void> {
+    // Clear module cache, the next import of a module runs the file again instead of returning the already-loaded copy
     vi.resetModules();
     wasm = fakeWasm();
     postMessage = vi.fn();
@@ -38,12 +39,14 @@ describe('app.worker', () => {
     vi.spyOn(WebAssembly, 'instantiate').mockResolvedValue({ instance: { exports: wasm } } as never);
 
     await import('./app.worker');
-    await vi.advanceTimersByTimeAsync(0); // Let the loading promises finish
+    // Moves the fake timers by 0 ms, which fires anything due right now and let the loading promises finish
+    await vi.advanceTimersByTimeAsync(0);
   }
 
   const send = (data: unknown) => onMessage({ data });
   const batches = () => postMessage.mock.calls.map(([message]) => message).filter((m) => m.type === 'batch');
 
+  // Replace the real timer functions with fake ones before every test, so the test controls time instead of waiting for it
   beforeEach(() => vi.useFakeTimers());
 
   afterEach(() => {
@@ -96,6 +99,7 @@ describe('app.worker', () => {
 
       vi.advanceTimersByTime(500);
 
+      // 2 * 7 = 14, [1, 2, ..., 14]
       expect(Array.from(batches()[0].records)).toEqual(Array.from({ length: 14 }, (_, i) => i + 1));
     });
 
@@ -113,7 +117,7 @@ describe('app.worker', () => {
 
       vi.advanceTimersByTime(500);
 
-      expect(batches()[0].records.buffer.byteLength).toBe(FIELDS_PER_UPDATE * 4);
+      expect(batches()[0].records.buffer.byteLength).toBe(FIELDS_PER_UPDATE * 4); // 4 bytes in one int32
     });
   });
 

@@ -20,7 +20,7 @@ describe("Dashboard", () => {
 
     fixture = TestBed.createComponent(Dashboard);
     worker = FakeWorker.instance;
-    await fixture.whenStable();
+    await fixture.whenStable(); // Waits until Angular has finished all pending work for that component
   });
 
   afterEach(() => vi.unstubAllGlobals());

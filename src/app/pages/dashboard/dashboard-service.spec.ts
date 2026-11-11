@@ -63,6 +63,7 @@ describe('DashboardService', () => {
     });
 
     it('reaches the imbalance limits of -1 and +1', () => {
+      // (100 − 0) / (100 + 0) = +1; (0 − 100) / (0 + 100) = −1
       worker.emit(batch(1, [0, 10000, 1, 9999, 10001, 100, 0], [1, 10000, 1, 9999, 10001, 0, 100]));
 
       expect(row(0).imbalance).toBe(1);
@@ -84,7 +85,7 @@ describe('DashboardService', () => {
     });
 
     it('ignores an instrument index outside the run', () => {
-      worker.emit(batch(1, [99, 10000, 10, 9999, 10001, 100, 300]));
+      worker.emit(batch(1, [99, 10000, 10, 9999, 10001, 100, 300])); // We don't have instrument with index 99
 
       expect(service.metrics().every((metrics) => metrics.volume === 0)).toBe(true);
     });

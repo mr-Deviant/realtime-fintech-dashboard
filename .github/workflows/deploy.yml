@@ -35,6 +35,7 @@ jobs:
       # GitHub Pages has no SPA fallback: serving index.html as 404.html lets deep links such as /settings work.
       - run: cp dist/realtime-fintech-dashboard/browser/index.html dist/realtime-fintech-dashboard/browser/404.html
 
+      # Package the built site and upload it as a workflow artifact, so the next job can publish it to GitHub Pages
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/realtime-fintech-dashboard/browser
